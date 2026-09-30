@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NB Trip Packing List</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --sand: #f5efe6;
+    --bark: #2c1f14;
+    --pine: #2d5016;
+    --ocean: #1a4a6e;
+    --fog: #c8d8e4;
+    --rust: #b5451b;
+    --cream: #fdf8f2;
+    --checked: #e8f0e0;
+  }
+
+  body {
+    background: var(--sand);
+    color: var(--bark);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .page {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    position: relative;
+  }
+
+  .trip-tag {
+    display: inline-block;
+    background: var(--ocean);
+    color: var(--fog);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.35rem 1rem;
+    margin-bottom: 0.75rem;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 6vw, 3rem);
+    font-weight: 900;
+    line-height: 1.05;
+    color: var(--bark);
+  }
+
+  h1 span { color: var(--pine); }
+
+  .subtitle {
+    margin-top: 0.5rem;
+    font-size: 0.72rem;
+    color: var(--ocean);
+    letter-spacing: 0.05em;
+  }
+
+  .progress-bar-wrap {
+    margin: 1.5rem 0 0.4rem;
+    background: var(--fog);
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--pine), var(--ocean));
+    border-radius: 3px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .progress-label {
+    font-size: 0.65rem;
+    color: var(--ocean);
+    letter-spacing: 0.08em;
+    text-align: right;
+  }
+
+  /* ── PLANE OUTFIT SECTION ── */
+  .plane-outfit {
+    background: var(--bark);
+    color: var(--sand);
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .plane-outfit::before {
+    content: '✈';
+    position: absolute;
+    right: 1.2rem;
+    top: 1rem;
+    font-size: 3rem;
+    opacity: 0.08;
+    pointer-events: none;
+  }
+
+  .plane-outfit h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    margin-bottom: 0.25rem;
+    color: var(--fog);
+  }
+
+  .plane-outfit .tagline {
+    font-size: 0.62rem;
+    color: #8aacbf;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+  }
+
+  .outfit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  .outfit-item {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 3px;
+    padding: 0.7rem 0.9rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    user-select: none;
+  }
+
+  .outfit-item:hover { background: rgba(255,255,255,0.12); }
+
+  .outfit-item.checked {
+    background: rgba(45, 80, 22, 0.35);
+    border-color: rgba(138, 195, 80, 0.3);
+  }
+
+  .outfit-item input[type="checkbox"] { display: none; }
+
+  .outfit-check {
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid rgba(255,255,255,0.35);
+    border-radius: 2px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #a3d96a;
+    transition: border-color 0.2s;
+  }
+
+  .outfit-item.checked .outfit-check {
+    border-color: #a3d96a;
+    background: rgba(163, 217, 106, 0.1);
+  }
+
+  .outfit-info { flex: 1; }
+
+  .outfit-name {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--fog);
+    line-height: 1.2;
+  }
+
+  .outfit-why {
+    font-size: 0.6rem;
+    color: #7a99b0;
+    margin-top: 0.2rem;
+    line-height: 1.4;
+  }
+
+  .tip-box {
+    margin-top: 1rem;
+    background: rgba(26, 74, 110, 0.4);
+    border-left: 3px solid var(--ocean);
+    padding: 0.7rem 0.9rem;
+    border-radius: 0 3px 3px 0;
+    font-size: 0.65rem;
+    color: var(--fog);
+    line-height: 1.6;
+  }
+
+  /* ── CHECKLIST SECTIONS ── */
+  .section {
+    margin-bottom: 1.5rem;
+    border: 1.5px solid rgba(44,31,20,0.15);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .section-header {
+    background: var(--bark);
+    color: var(--fog);
+    padding: 0.7rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .section-header:hover { background: #3d2c1e; }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-icon { font-size: 1rem; }
+
+  .section-count {
+    font-size: 0.6rem;
+    color: #8aacbf;
+    letter-spacing: 0.05em;
+  }
+
+  .section-body {
+    background: var(--cream);
+  }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid rgba(44,31,20,0.07);
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+  }
+
+  .check-item:last-child { border-bottom: none; }
+  .check-item:hover { background: rgba(44,31,20,0.04); }
+
+  .check-item.checked { background: var(--checked); }
+
+  .check-item input[type="checkbox"] { display: none; }
+
+  .custom-check {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(44,31,20,0.25);
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--pine);
+    transition: all 0.15s;
+  }
+
+  .check-item.checked .custom-check {
+    background: var(--pine);
+    border-color: var(--pine);
+    color: white;
+  }
+
+  .item-text { flex: 1; }
+
+  .item-name {
+    font-size: 0.8rem;
+    color: var(--bark);
+    line-height: 1.3;
+  }
+
+  .check-item.checked .item-name {
+    text-decoration: line-through;
+    color: #8a7a6e;
+  }
+
+  .item-note {
+    font-size: 0.6rem;
+    color: #9a8c7e;
+    margin-top: 0.15rem;
+    line-height: 1.4;
+  }
+
+  .qty {
+    font-size: 0.62rem;
+    background: rgba(44,31,20,0.08);
+    padding: 0.1rem 0.4rem;
+    border-radius: 10px;
+    color: var(--ocean);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .reset-btn {
+    display: block;
+    margin: 2rem auto 0;
+    background: transparent;
+    border: 1.5px solid var(--bark);
+    color: var(--bark);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.6rem 1.5rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+
+  .reset-btn:hover {
+    background: var(--bark);
+    color: var(--sand);
+  }
+
+  @media (max-width: 480px) {
+    .outfit-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="trip-tag">✈ New Brunswick · 9 Days · 35L</div>
+    <h1>Pack<span>Smart</span></h1>
+    <p class="subtitle">Summer 2026 — Tap items to check them off</p>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="progress-label" id="progressLabel">0 / 0 packed</div>
+  </header>
+
+  <!-- PLANE OUTFIT -->
+  <div class="plane-outfit">
+    <h2>✈ Wear on the Plane</h2>
+    <p class="tagline">Maximize bulk · free up bag space</p>
+    <div class="outfit-grid" id="outfitGrid">
+      <label class="outfit-item" onclick="toggleOutfit(this)">
+        <div class="outfit-check"></div>
+        <div class="outfit-info">
+          <div class="outfit-name">Undies</div>
+          <div class="outfit-why">Comfy</div>
+        </div>
+      </label>
+      <label class="outfit-item" onclick="toggleOutfit(this)">
+        <div class="outfit-check"></div>
+        <div class="outfit-info">
+          <div class="outfit-name">Jeans</div>
+          <div class="outfit-why">Heaviest bottom — saves the most bag volume</div>
+        </div>
+      </label>
+      <label class="outfit-item" onclick="toggleOutfit(this)">
+        <div class="outfit-check"></div>
+        <div class="outfit-info">
+          <div class="outfit-name">Casual bra</div>
+          <div class="outfit-why">Comfortable for travel, one less to pack</div>
+        </div>
+      </label>
+      <label class="outfit-item" onclick="toggleOutfit(this)">
+        <div class="outfit-check"></div>
+        <div class="outfit-info">
+          <div class="outfit-name">Shirt</div>
+          <div class="outfit-why">Comfortable for travel, one less to pack</div>
+        </div>
+      </label>
+      <label class="outfit-item" onclick="toggleOutfit(this)">
+        <div class="outfit-check"></div>
+        <div class="outfit-info">
+          <div class="outfit-name">Hoodie</div>
+          <div class="outfit-why">Bulkiest layer — doubles as a plane blanket</div>
+        </div>
+      </label>
+      <label class="outfit-item" onclick="toggleOutfit(this)">
+        <div class="outfit-check"></div>
+        <div class="outfit-info">
+          <div class="outfit-name">Light jacket</div>
+          <div class="outfit-why">Wear over hoodie — two layers, zero bag space</div>
+        </div>
+      </label>
+      <label class="outfit-item" onclick="toggleOutfit(this)">
+        <div class="outfit-check"></div>
+        <div class="outfit-info">
+          <div class="outfit-name">Socks</div>
+          <div class="outfit-why">Bulkiest</div>
+        </div>
+      </label>
+      <label class="outfit-item" onclick="toggleOutfit(this)">
+        <div class="outfit-check"></div>
+        <div class="outfit-info">
+          <div class="outfit-name">Sneakers</div>
+          <div class="outfit-why">Biggest space hog in any bag — wear them</div>
+        </div>
+      </label>
+    </div>
+    <div class="tip-box">
+      💡 <strong>Pro tip:</strong> Stuff your socks into your shoes before packing. Wear your heaviest socks on the plane too. Keep sandals flat against the back panel of your bag.
+    </div>
+  </div>
+
+  <!-- CHECKLIST SECTIONS -->
+  <div id="sections"></div>
+
+  <button class="reset-btn" onclick="resetAll()">↺ Reset All</button>
+
+</div>
+
+<script>
+const data = [
+  {
+    title: "Large Cube — Clothes", icon: "⬜",
+    subtitle: "Tops, bottoms & sleepwear — roll everything to save space",
+    items: [
+      { name: "Casual t-shirts", qty: "×2", note: "Neutral colours that mix & match" },
+      { name: "Lightweight shirt", qty: "×1", note: "Linen or breathable fabric — great for warm days out" },
+      { name: "Body Suit", qty: "×1", note: "Going out or sunny days" },
+      { name: "Athletic / moisture-wicking top", qty: "×1", note: "For hikes and outdoor days" },
+      { name: "Shorts", qty: "×1", note: "Casual everyday pair" },
+      { name: "Hiking pants", qty: "×1", note: "For trails and active days — quick-dry fabric ideal" },
+      { name: "Long Skirt", qty: "×1", note: "For hot sunny days" },
+      { name: "Sleeping set", qty: "×1", note: "Dedicated sleep clothes — keep separate from day wear" },
+      { name: "Rain jacket", note: "Compact — tuck into its own pocket if possible" },
+      { name: "Sun shirt", note: "Good for sunny days" },
+    ]
+  },
+  {
+    title: "Medium Cube — Essentials", icon: "⬜",
+    subtitle: "Underwear, socks & small items — stuff socks into shoes before packing",
+    items: [
+      { name: "Underwear", qty: "×6", note: "One spare per day + one extra" },
+      { name: "Socks", qty: "×6", note: "Roll pairs together to save space" },
+      { name: "Sport bras", qty: "×2", note: "Stack together" },
+      { name: "Nicer top for going out", qty: "×1", note: "Black backless" },
+      { name: "Wire bras", qty: "×1", note: "Stack together" },
+      { name: "Swimsuit", qty: "×1", note: "Quick-dry fabric ideal" },    
+    ]
+  },
+  {
+    title: "Pockets — Tech", icon: "⛉",
+    subtitle: "Electronics & extras — keep cables coiled with a velcro tie",
+    items: [
+      { name: "Phone", note: "" },
+      { name: "Charger", note: "" },
+      { name: "Power Box", note: "" },
+      { name: "Power bank", note: "Great for long days out" },
+      { name: "Earbuds", note: "" },
+      { name: "Kindle", note: "Unlimited reading, weighs nothing" },
+      { name: "Jewelry", note: "Pack in a small pouch or pill organizer to avoid tangles" },
+      { name: "Tote bag", note: "Folds flat — great for beach, markets, day trips" },
+    ]
+  },
+  {
+    title: "Toiletry Bag", icon: "🫧",
+    subtitle: "All travel-sized (≤ 100ml) for carry-on",
+    items: [
+      { name: "Shampoo", note: "Travel-sized ≤ 100ml" },
+      { name: "Conditioner", note: "Travel-sized ≤ 100ml" },
+      { name: "Body wash", note: "Travel-sized ≤ 100ml" },
+      { name: "Razors", note: "" },
+      { name: "Face wash", note: "" },
+      { name: "Moisturizer", note: "" },
+      { name: "Sunscreen SPF 30+", note: "Essential for beach & outdoor days" },
+      { name: "Lip balm", note: "" },
+      { name: "Toothbrush", note: "" },
+      { name: "Toothpaste", note: "Travel-sized ≤ 100ml" },
+      { name: "Floss", note: "" },
+      { name: "Deodorant", note: "Stick format packs easier than spray" },
+      { name: "Medications / vitamins", note: "Keep in original packaging" },
+      { name: "Bug repellent", note: "Wipes or small spray — NB has no-see-ums" },
+      { name: "Hairbrush", note: "" },
+      { name: "Comb", note: "" },
+      { name: "Hair ties", note: "" },
+      { name: "Hair clip", note: "" },
+    ]
+  },
+  {
+    title: "Loose in Bag", icon: "🎒",
+    subtitle: "Items that don't cube well — fill gaps around your cubes",
+    items: [
+      { name: "Sandals", note: "Flat against the back panel" },
+      { name: "Sunglasses", note: "Wrap in a soft sock for protection" },
+      { name: "Book", note: "Slide down the side of the bag" },
+      { name: "Wallet", note: "" },
+      { name: "Cash (small amount)", note: "" },
+      { name: "Passport", note: "" },
+      { name: "Flight confirmation", note: "Screenshot it offline just in case" },
+    ]
+  },
+  {
+    title: "If there's Space", icon: "🎒",
+    subtitle: "Items that don't have to come, but are nice to have if there's room",
+    items: [
+      { name: "Vans", note: "stuff with socks" },
+      { name: "Water bottle", note: "Collapsible saves space when empty" },
+      { name: "Sweat pants", note: "Comfortable for lounging or light exercise" },
+    ]
+  },
+];
+
+let allCheckboxes = [];
+
+function buildSections() {
+  const container = document.getElementById('sections');
+  data.forEach((section, si) => {
+    const div = document.createElement('div');
+    div.className = 'section';
+    div.innerHTML = `
+      <div class="section-header" onclick="toggleSection(${si})">
+        <div>
+          <div class="section-title">
+            <span class="section-icon">${section.icon}</span>
+            ${section.title}
+          </div>
+          ${section.subtitle ? `<div style="font-size:0.58rem;color:#8aacbf;margin-top:0.2rem;letter-spacing:0.04em;">${section.subtitle}</div>` : ''}
+        </div>
+        <span class="section-count" id="count-${si}">0 / ${section.items.length}</span>
+      </div>
+      <div class="section-body" id="body-${si}">
+        ${section.items.map((item, ii) => `
+          <label class="check-item" id="item-${si}-${ii}" onclick="toggleItem(${si}, ${ii}, this)">
+            <div class="custom-check" id="chk-${si}-${ii}"></div>
+            <div class="item-text">
+              <div class="item-name">${item.name}</div>
+              ${item.note ? `<div class="item-note">${item.note}</div>` : ''}
+            </div>
+            ${item.qty ? `<span class="qty">${item.qty}</span>` : ''}
+          </label>
+        `).join('')}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+  updateProgress();
+}
+
+const state = {};
+
+function toggleItem(si, ii, el) {
+  const key = `${si}-${ii}`;
+  state[key] = !state[key];
+  el.classList.toggle('checked', state[key]);
+  const chk = document.getElementById(`chk-${si}-${ii}`);
+  chk.innerHTML = state[key] ? '✓' : '';
+  updateCount(si);
+  updateProgress();
+}
+
+function toggleOutfit(el) {
+  el.classList.toggle('checked');
+  const chk = el.querySelector('.outfit-check');
+  chk.innerHTML = el.classList.contains('checked') ? '✓' : '';
+  updateProgress();
+}
+
+function toggleSection(si) {
+  const body = document.getElementById(`body-${si}`);
+  body.style.display = body.style.display === 'none' ? '' : 'none';
+}
+
+function updateCount(si) {
+  const total = data[si].items.length;
+  let done = 0;
+  data[si].items.forEach((_, ii) => { if (state[`${si}-${ii}`]) done++; });
+  document.getElementById(`count-${si}`).textContent = `${done} / ${total}`;
+}
+
+function updateProgress() {
+  let total = 0, done = 0;
+  data.forEach((section, si) => {
+    section.items.forEach((_, ii) => {
+      total++;
+      if (state[`${si}-${ii}`]) done++;
+    });
+  });
+  // Also count outfit items
+  const outfitItems = document.querySelectorAll('.outfit-item');
+  outfitItems.forEach(el => {
+    total++;
+    if (el.classList.contains('checked')) done++;
+  });
+
+  const pct = total ? (done / total) * 100 : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${done} / ${total} packed`;
+}
+
+function resetAll() {
+  Object.keys(state).forEach(k => delete state[k]);
+  document.querySelectorAll('.check-item').forEach(el => {
+    el.classList.remove('checked');
+  });
+  document.querySelectorAll('.custom-check').forEach(el => el.innerHTML = '');
+  document.querySelectorAll('.outfit-item').forEach(el => {
+    el.classList.remove('checked');
+    el.querySelector('.outfit-check').innerHTML = '';
+  });
+  data.forEach((_, si) => updateCount(si));
+  updateProgress();
+}
+
+buildSections();
+</script>
+</body>
+</html>
