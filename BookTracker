@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Monthly Reading Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+:root{--bg:#eef2ee;--panel:#fbfcfa;--ink:#16262a;--mute:#66777a;--line:#d3dcd6;--acc:#1e7a6c;--acc2:#e3a536;--track:#dfe7e2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a1c;--panel:#172629;--ink:#e6efec;--mute:#8ea3a3;--line:#294044;--acc:#4fc3ae;--acc2:#f0b84a;--track:#22383b}}
+:root[data-theme="dark"]{--bg:#0f1a1c;--panel:#172629;--ink:#e6efec;--mute:#8ea3a3;--line:#294044;--acc:#4fc3ae;--acc2:#f0b84a;--track:#22383b}
+*,*:before,*:after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Source Serif 4",Georgia,serif}
+main{max-width:920px;margin:0 auto;padding:24px 18px 60px}
+h1,h2,.num,button,label,.lbl{font-family:"Bricolage Grotesque",system-ui,sans-serif}
+header{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+h1{font-size:clamp(2rem,6vw,3.2rem);line-height:1;margin:0;font-weight:800;letter-spacing:-.02em}
+.sub{color:var(--mute);margin:6px 0 0}
+.goal{display:flex;align-items:center;gap:8px;font-family:"Bricolage Grotesque",sans-serif}
+input{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 9px;min-width:0}
+input:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.goal input{width:90px}
+.bar{height:14px;background:var(--track);border-radius:7px;overflow:hidden;margin:6px 0 22px}
+.bar i{display:block;height:100%;background:var(--acc);border-radius:7px;transition:width .4s}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:34px}
+.stat{background:var(--panel);padding:14px 14px 12px}
+.stat .lbl{font-size:.8rem;color:var(--mute);font-weight:500}
+.stat .num{font-size:1.8rem;font-weight:700;line-height:1.15}
+.stat.hero .num{color:var(--acc)}
+h2{font-size:1.3rem;margin:0 0 14px}
+.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.book{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;gap:14px}
+.spine{flex:none;width:64px;height:96px;border-radius:4px 8px 8px 4px;position:relative;overflow:hidden;background:var(--track);border:1px solid var(--line);cursor:pointer}
+.spine .fill{position:absolute;left:0;right:0;bottom:0;transition:height .4s}
+.spine .cv{position:absolute;inset:0;background-size:cover;background-position:center}
+.spine .pct{position:absolute;inset:auto 0 6px 0;text-align:center;font:800 .95rem "Bricolage Grotesque",sans-serif;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.info{flex:1;min-width:0}
+.info .t{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.info .p{color:var(--mute);font-size:.9rem;margin-bottom:8px}
+.row{display:flex;gap:6px;margin-bottom:6px}
+.row input{width:100%}
+button{font-weight:600;font-size:.85rem;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:7px 10px;cursor:pointer}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+button.x{border:0;background:none;color:var(--mute);padding:2px 4px;font-size:.8rem}
+.done .t:after{content:" ✓";color:var(--acc)}
+form.add{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px;padding:14px;border:1px dashed var(--line);border-radius:12px}
+form.add input{flex:1 1 140px}
+.hint{color:var(--mute);font-size:.85rem;margin-top:10px}
+@media (max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div><h1 id="month"></h1><p class="sub" id="sub"></p></div>
+  <div class="goal"><label for="goal">Pages goal</label><input id="goal" type="number" min="1"></div>
+</header>
+<div class="bar" role="progressbar" aria-label="Monthly goal progress"><i id="barfill"></i></div>
+<section class="stats" id="stats"></section>
+
+<h2>Current reads</h2>
+<section class="shelf" id="shelf"></section>
+
+<form class="add" id="add">
+  <input id="nt" list="lib" placeholder="Book title" required aria-label="Book title">
+  <datalist id="lib"></datalist>
+  <input id="np" type="number" min="1" placeholder="Total pages" required aria-label="Total pages" style="flex:0 1 120px">
+  <button class="pri">Add book</button>
+</form>
+<p class="hint"><button type="button" id="exp">Export backup</button> <button type="button" id="imp">Import backup</button></p>
+<p class="hint">Previously added books appear as you type a title. Tap a cover to upload an image. Add pages as you read; your reading is saved in this browser.</p>
+</main>
+<script>
+const KEY='reading-tracker-v1';
+const COLORS=['#2f6f4f','#c8582f','#3a63a8','#7a4b8f','#b8892a','#237b86'];
+let S={goal:600,books:[],log:{},lib:[]};
+try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r));}catch(e){}
+S.books.forEach(b=>{if(!S.lib.some(l=>l.title===b.title))S.lib.push({title:b.title,total:b.total,img:b.img})});
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id);
+const now=new Date(),y=now.getFullYear(),m=now.getMonth();
+const dim=new Date(y,m+1,0).getDate(),left=dim-now.getDate()+1;
+const pad=n=>String(n).padStart(2,'0');
+const today=`${y}-${pad(m+1)}-${pad(now.getDate())}`,prefix=`${y}-${pad(m+1)}`;
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function addRead(b,delta){
+  const nv=Math.max(0,Math.min(b.total,b.read+delta)),d=nv-b.read;
+  b.read=nv;S.log[today]=Math.max(0,(S.log[today]||0)+d);
+  save();render();
+}
+function render(){
+  $('month').textContent=now.toLocaleString('en',{month:'long',year:'numeric'});
+  const monthRead=Object.entries(S.log).filter(([k])=>k.startsWith(prefix)).reduce((a,[,v])=>a+v,0);
+  const g=S.goal||1,togo=Math.max(0,g-monthRead),pct=Math.round(monthRead/g*100);
+  const fin=S.books.filter(b=>b.read>=b.total).reduce((a,b)=>a+b.total,0);
+  const perDay=left?Math.ceil(togo/left):0;
+  $('goal').value=S.goal;
+  $('lib').innerHTML=S.lib.map(l=>`<option value="${esc(l.title)}">`).join('');
+  $('barfill').style.width=Math.min(100,pct)+'%';
+  $('sub').textContent=togo?`${togo} pages to go — about ${perDay} a day.`:'Goal reached. Anything more is a bonus.';
+  const st=[['Read today',S.log[today]||0,1],['Read this month',monthRead],['Goal progress',pct+'%'],['To go',togo],
+    ['Daily needed',perDay],['Finished books',S.books.filter(b=>b.read>=b.total).length+' ('+fin+' pp)'],['Days in month',dim],['Days left',left]];
+  $('stats').innerHTML=st.map(s=>`<div class="stat${s[2]?' hero':''}"><div class="lbl">${s[0]}</div><div class="num">${s[1]}</div></div>`).join('');
+  $('shelf').innerHTML=S.books.length?S.books.map((b,i)=>{
+    const p=Math.round(b.read/b.total*100);
+    return `<div class="book${p>=100?' done':''}">
+      <div class="spine" data-cover="${i}" title="Upload cover">${b.img?`<div class="cv" style="background-image:url(${b.img})"></div>`:`<div class="fill" style="height:${p}%;background:${COLORS[i%COLORS.length]}"></div>`}<div class="pct">${p}%</div></div>
+      <div class="info"><div class="t" title="${esc(b.title)}">${esc(b.title)}</div>
+      <div class="p">${b.read} of ${b.total} pages</div>
+      <div class="row"><input type="number" min="1" placeholder="+ pages" data-in="${i}" aria-label="Pages read"><button class="pri" data-add="${i}">Add</button></div>
+      <button class="x" data-del="${i}">Remove</button></div></div>`}).join(''):'<p class="sub">No books yet. Add one below.</p>';
+}
+$('goal').onchange=e=>{S.goal=Math.max(1,+e.target.value||1);save();render()};
+$('nt').oninput=e=>{const l=S.lib.find(x=>x.title===e.target.value);if(l)$('np').value=l.total};
+$('add').onsubmit=e=>{e.preventDefault();const t=$('nt').value.trim(),n=+$('np').value,l=S.lib.find(x=>x.title===t);if(l)l.total=n;else S.lib.push({title:t,total:n});S.books.push({title:t,total:n,read:0,img:l&&l.img});$('nt').value=$('np').value='';save();render()};
+$('shelf').onclick=e=>{
+  const t=e.target;
+  if(t.dataset.add!==undefined){const i=+t.dataset.add,v=+document.querySelector(`[data-in="${i}"]`).value;if(v)addRead(S.books[i],v)}
+  else if(t.dataset.del!==undefined){if(confirm('Remove this book?')){S.books.splice(+t.dataset.del,1);save();render()}}
+  else{const sp=t.closest('[data-cover]');if(sp){const f=document.createElement('input');f.type='file';f.accept='image/*';
+    f.onchange=()=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=128;c.height=192;c.getContext('2d').drawImage(im,0,0,128,192);const b=S.books[+sp.dataset.cover];b.img=c.toDataURL('image/jpeg',.7);const l=S.lib.find(x=>x.title===b.title);if(l)l.img=b.img;save();render()};im.src=r.result};r.readAsDataURL(f.files[0])};f.click()}}
+};
+$('shelf').onkeydown=e=>{if(e.key==='Enter'&&e.target.dataset.in!==undefined){e.target.parentNode.querySelector('button').click()}};
+$('exp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='reading-backup.json';a.click()};
+$('imp').onclick=()=>{const f=document.createElement('input');f.type='file';f.accept='.json';f.onchange=()=>{const r=new FileReader();r.onload=()=>{try{S=Object.assign({goal:600,books:[],log:{},lib:[]},JSON.parse(r.result));save();render()}catch(e){alert('That file could not be read.')}};r.readAsText(f.files[0])};f.click()};
+render();
+</script>
+</body>
+</html>
